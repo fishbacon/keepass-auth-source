@@ -1,0 +1,22 @@
+* keepass-auth-source for emacs
+** Introduction
+   This provides KeePass as an auth-source for emacs.
+** Requirements
+   The following packages are required for keepass-auth-soucre:
+   - dash.el
+   - s.el
+
+
+   The following programmes are required to be on your path:
+
+   - [[https://keepass.info/][KeePass]]
+   - [[https://keepass.info/plugins.html#kpscript][KPScript]]
+** Installation
+   Add keepass-auth-source to your =load-path=.
+** Setup
+   1. Add =(require 'keepass-auth-source)= to your init file
+   2. Add =(keepass-auth-source-enable)= to your init file to enable using KeePass database files as an auth-source
+** Configuration
+   If your KeePass database, called =passwords.kdbx=, is in your .emacs.d directory you should add =(add-to-list 'auth-sources "~/.emacs.d/passwords.kdbx")= to your init file as well.
+
+   The auth-source will ask for password for the kdbx file when trying to use it as an auth source.

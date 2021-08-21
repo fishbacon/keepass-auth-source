@@ -98,7 +98,7 @@
   "Enable keepass auth source.
 Executables for keepass and kpscript must be available on the path for this to work."
   (interactive)
-  (if (-all #'executable-find '("keepass" "kpscript"))
+  (if (-all-p #'executable-find '("keepass" "kpscript"))
       (progn
         (auth-source-forget-all-cached)
         (if (boundp 'auth-source-backend-parser-functions)

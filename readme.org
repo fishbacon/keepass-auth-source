@@ -24,3 +24,5 @@
    #+END_SRC
 
    The auth-source will ask for password for the kdbx file when trying to use it as an auth source.
+
+   KeePass database passwords are set to expire after two hours, this can be customized by setting =keepass-auth-source-cache-expiry= to any other value. It can also be customized via =m-x= =customize-variable=.

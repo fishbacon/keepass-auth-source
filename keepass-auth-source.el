@@ -36,6 +36,16 @@
 (require 'dash)
 (require 's)
 
+;;;###autoload
+(defcustom keepass-auth-source-cache-expiry 7200
+  "How many seconds the KeePass database password is cached,
+or nil to disable expiry."
+  :type '(choice (const :tag "Never" nil)
+          (const :tag "All Day" 86400)
+          (const :tag "2 Hours" 7200)
+          (const :tag "30 Minutes" 1800)
+          (integer :tag "Seconds")))
+
 (cl-defun keepass-auth-source-search (&rest spec
                                       &key backend type host user port max
                                         &allow-other-keys)
@@ -47,7 +57,8 @@
              (max (or max 1))
              (path-name (url-filename url))
              (password-prompt (format "Keepass password (%s): " entity))
-             (password (let ((password
+             (password (let ((password-cache-expiry keepass-auth-source-cache-expiry)
+                             (password
                               (cond
                                 ((password-read-from-cache entity))
                                 ((password-read password-prompt entity)))))

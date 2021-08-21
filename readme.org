@@ -17,6 +17,10 @@
    1. Add =(require 'keepass-auth-source)= to your init file
    2. Add =(keepass-auth-source-enable)= to your init file to enable using KeePass database files as an auth-source
 ** Configuration
-   If your KeePass database, called =passwords.kdbx=, is in your .emacs.d directory you should add =(add-to-list 'auth-sources "~/.emacs.d/passwords.kdbx")= to your init file as well.
+   If your KeePass database, called =passwords.kdbx=, is in your .emacs.d directory you should add the following to your init file:
+
+   #+BEGIN_SRC elisp
+     (add-to-list 'auth-sources "~/.emacs.d/passwords.kdbx")
+   #+END_SRC
 
    The auth-source will ask for password for the kdbx file when trying to use it as an auth source.

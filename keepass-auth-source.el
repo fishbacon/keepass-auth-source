@@ -65,8 +65,8 @@
              (keepass-command-title (s-format keepass-command-base 'aget
                                          (cons '(field . "Title") keepass-command-fields)))
              (result-s (shell-command-to-string keepass-command))
-             (result (s-split "\n" result-s))
-             (is-error (not (s-contains-p "OK:" (cadr (reverse result))))))
+             (result (-drop-last 2 (s-split "\n" result-s)))
+             (is-error (not (s-contains-p "OK: " result-s))))
         (cond
           (is-error
            (cond
@@ -75,16 +75,15 @@
                 (password-cache-remove entity)
                 (error "Incorrect password for %s" entity)))
              (t (error "Something went wrong in keepass: %s" result-s))))
-          ((= 2 (length result)) nil)
-          ((= (+ max 2) (length result)) (seq-take max result))
-          (t
+          ((= 0 (length result)) nil)
+          ((= max 1)
            (let* ((titles (s-split "\n" (shell-command-to-string keepass-command-title)))
-                  (completions (-zip-pair
-                                (-drop-last 2 titles) result)))
+                  (completions (-zip-pair (-drop-last 2 titles) result)))
              (cdr (assoc-string (completing-read "Multiple entries in db pick one: "
                                                  completions
                                                  nil t)
-                                completions)))))))))
+                                completions))))
+          (t (seq-take max result)))))))
 
 (defun keepass-auth-source-backend-parser (entry)
   "Provides keepass backend for files with the .kdbx extension."

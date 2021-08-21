@@ -29,6 +29,10 @@
 ;; Adds KeePass support to auth-source.
 
 ;;; Code:
+(require 'auth-source)
+(require 'cl-lib)
+(require 'password-cache)
+(require 'simple)
 (require 'dash)
 (require 's)
 
@@ -83,7 +87,7 @@
                                                  completions
                                                  nil t)
                                 completions))))
-          (t (seq-take max result)))))))
+          (t (-take max result)))))))
 
 (defun keepass-auth-source-backend-parser (entry)
   "Provides keepass backend for files with the .kdbx extension."

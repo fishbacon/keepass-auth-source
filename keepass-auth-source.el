@@ -2,7 +2,7 @@
 
 ;; Author: Mark Faldborg
 ;; Maintainer: Mark Faldborg
-;; Version: 1.0.0
+;; Version: 1.0.1
 ;; Package-Requires: (dash s)
 ;; Homepage: https://github.com/fishbacon/keepass-auth-source
 ;; Keywords: keepass auth-source passwords

@@ -46,6 +46,29 @@ or nil to disable expiry."
           (const :tag "30 Minutes" 1800)
           (integer :tag "Seconds")))
 
+(defun keepass-auth-source--parse-auth (auth-string port)
+  (save-match-data
+    (with-temp-buffer
+      (insert auth-string)
+      (goto-char (point-min))
+      (let ((result `(:port ,port))
+            (mappings '(:url :host
+                        :username :user
+                        :password :secret)))
+        (while (search-forward-regexp "^S: \\(.*\\) = \\(.*\\)$" nil t)
+          (let* ((key (intern (concat ":" (downcase (match-string 1)))))
+                 (key (or (plist-get mappings key) key))
+                 (value (match-string 2))
+                 (value (if (eq :secret key) `(lambda () ,value) value)))
+            (setq result (plist-put result key value))))
+        result))))
+
+(defun keepass-auth-source--parse (output port)
+  (let* ((results (s-split "\n\n" output))
+         (status (-last-item results))
+         (auths (--map (keepass-auth-source--parse-auth it port) (-drop-last 1 results))))
+    `(,auths ,status)))
+
 (cl-defun keepass-auth-source-search (&rest spec
                                       &key backend type host user port max
                                         &allow-other-keys)
@@ -53,9 +76,9 @@ or nil to disable expiry."
   (let ((entity (slot-value backend 'source)))
     (when (file-exists-p entity)
       (let* ((url (url-generic-parse-url host))
-             (host (url-host url))
+             (host (or (url-host url) ""))
              (max (or max 1))
-             (path-name (url-filename url))
+             (path-name (or (url-filename url) ""))
              (password-prompt (format "Keepass password (%s): " entity))
              (password (let ((password-cache-expiry keepass-auth-source-cache-expiry)
                              (password
@@ -65,39 +88,38 @@ or nil to disable expiry."
                          (password-cache-add entity password)
                          password))
              (keepass-command-base (s-join " "
-                                      (list "kpscript -C:GetEntryString"
-                                            "${db}"
-                                            "-field:${field}"
-                                            "-ref-Username:${user}"
-                                            "-ref-URL://${url}//"
-                                            "-pw:${password}")))
+                                           (list "kpscript -C:ListEntries"
+                                                 "${db}"
+                                                 "-ref-Username:${user}"
+                                                 "-ref-URL://${url}//"
+                                                 "-pw:${password}")))
              (keepass-command-fields (list (cons 'db (expand-file-name entity))
-                                      (cons 'field "Password")
-                                      (cons 'user user)
-                                      (cons 'url (concat host path-name))
-                                      (cons 'password password)))
+                                           (cons 'user (or user ""))
+                                           (cons 'url (concat host path-name))
+                                           (cons 'password password)))
              (keepass-command (s-format keepass-command-base 'aget keepass-command-fields))
-             (keepass-command-title (s-format keepass-command-base 'aget
-                                         (cons '(field . "Title") keepass-command-fields)))
-             (result-s (shell-command-to-string keepass-command))
-             (result (-drop-last 2 (s-split "\n" result-s)))
-             (is-error (not (s-contains-p "OK: " result-s))))
+             (output (shell-command-to-string keepass-command))
+             (result (keepass-auth-source--parse output port))
+             (status (-last-item result))
+             (result (-first-item result)))
         (cond
-          (is-error
+          ((s-prefix-p "E:" status)
            (cond
-             ((s-contains-p "E: The master key" result-s)
+             (( s-contains-p "E: The master key" status)
               (progn
                 (password-cache-remove entity)
                 (error "Incorrect password for %s" entity)))
-             (t (error "Something went wrong in keepass: %s" result-s))))
+             (t (error "Something went wrong in keepass: %s" status))))
           ((= 0 (length result)) nil)
-          ((= max 1)
-           (let* ((titles (s-split "\n" (shell-command-to-string keepass-command-title)))
-                  (completions (-zip-pair (-drop-last 2 titles) result)))
-             (cdr (assoc-string (completing-read "Multiple entries in db pick one: "
-                                                 completions
-                                                 nil t)
-                                completions))))
+          ((and (= max 1) (> (length result) max))
+           (let* ((completions (--map (cons (format "%s (%s)" (plist-get it :user)
+                                                    (plist-get it :title))
+                                            it)
+                                      result)))
+             (assoc-string (completing-read "Multiple passwords in keepass db pick one: "
+                                            completions
+                                            nil t)
+                           completions)))
           (t (-take max result)))))))
 
 (defun keepass-auth-source-backend-parser (entry)

@@ -2,7 +2,7 @@
 
 ;; Author: Mark Faldborg
 ;; Maintainer: Mark Faldborg
-;; Version: 1.0.1
+;; Version: 1.0.2
 ;; Package-Requires: (dash s)
 ;; Homepage: https://github.com/fishbacon/keepass-auth-source
 ;; Keywords: keepass auth-source passwords
@@ -76,6 +76,9 @@ or nil to disable expiry."
   (let ((entity (slot-value backend 'source)))
     (when (file-exists-p entity)
       (let* ((url (url-generic-parse-url host))
+             (url (if (url-fullness url)
+                      url
+                    (url-generic-parse-url (concat "//" host))))
              (host (or (url-host url) ""))
              (max (or max 1))
              (path-name (or (url-filename url) ""))
@@ -105,21 +108,22 @@ or nil to disable expiry."
         (cond
           ((s-prefix-p "E:" status)
            (cond
-             (( s-contains-p "E: The master key" status)
+             ((s-contains-p "E: The master key" status)
               (progn
                 (password-cache-remove entity)
                 (error "Incorrect password for %s" entity)))
              (t (error "Something went wrong in keepass: %s" status))))
           ((= 0 (length result)) nil)
           ((and (= max 1) (> (length result) max))
-           (let* ((completions (--map (cons (format "%s (%s)" (plist-get it :user)
-                                                    (plist-get it :title))
-                                            it)
+           (let* ((completions (--map (cons
+                                       (format "%s (%s)" (plist-get it :user) (plist-get it :title))
+                                       it)
                                       result)))
-             (assoc-string (completing-read "Multiple passwords in keepass db pick one: "
-                                            completions
-                                            nil t)
-                           completions)))
+             (list (cdr (assoc-string
+                         (completing-read "Multiple passwords in keepass db pick one: "
+                                          completions
+                                          nil t)
+                         completions)))))
           (t (-take max result)))))))
 
 (defun keepass-auth-source-backend-parser (entry)

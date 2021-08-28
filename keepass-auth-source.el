@@ -2,7 +2,7 @@
 
 ;; Author: Mark Faldborg
 ;; Maintainer: Mark Faldborg
-;; Version: 1.0.2
+;; Version: 1.0.3
 ;; Package-Requires: (dash s)
 ;; Homepage: https://github.com/fishbacon/keepass-auth-source
 ;; Keywords: keepass auth-source passwords
@@ -91,15 +91,15 @@ or nil to disable expiry."
                          (password-cache-add entity password)
                          password))
              (keepass-command-base (s-join " "
-                                           (list "kpscript -C:ListEntries"
-                                                 "${db}"
-                                                 "-ref-Username:${user}"
-                                                 "-ref-URL://${url}//"
-                                                 "-pw:${password}")))
-             (keepass-command-fields (list (cons 'db (expand-file-name entity))
-                                           (cons 'user (or user ""))
-                                           (cons 'url (concat host path-name))
-                                           (cons 'password password)))
+                                           '("kpscript -C:ListEntries"
+                                             "${db}"
+                                             "-ref-Username:${user}"
+                                             "-ref-URL://${url}//"
+                                             "-pw:${password}")))
+             (keepass-command-fields `((db . ,(expand-file-name entity))
+                                       (user . ,(or user ""))
+                                       (url . ,(concat host path-name))
+                                       (password . ,password)))
              (keepass-command (s-format keepass-command-base 'aget keepass-command-fields))
              (output (shell-command-to-string keepass-command))
              (result (keepass-auth-source--parse output port))

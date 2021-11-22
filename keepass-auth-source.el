@@ -1,4 +1,4 @@
-;;; keepass-auth-source-search.el --- auth-source for KeePass -*- lexical-binding: t -*-
+;;; keepass-auth-source.el --- auth-source for KeePass -*- lexical-binding: t -*-
 
 ;; Author: Mark Faldborg
 ;; Maintainer: Mark Faldborg
@@ -146,5 +146,5 @@ Executables for keepass and kpscript must be available on the path for this to w
           (advice-add 'auth-source-backend-parse :before-until #'keepass-auth-source-backend-parser)))
     (error "Executables for keepass or kpscript missing.")))
 
-(provide 'keepass-auth-source-search)
-;;; keepass-auth-source-search.el ends here
+(provide 'keepass-auth-source)
+;;; keepass-auth-source.el ends here

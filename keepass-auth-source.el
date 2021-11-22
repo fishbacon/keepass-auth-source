@@ -65,7 +65,7 @@ or nil to disable expiry."
 
 (defun keepass-auth-source--parse (output port)
   (let* ((results (s-split "\n\n" output))
-         (status (-last-item results))
+         (status (-first-item results))
          (auths (--map (keepass-auth-source--parse-auth it port) (-drop-last 1 results))))
     `(,auths ,status)))
 

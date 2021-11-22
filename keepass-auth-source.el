@@ -111,8 +111,8 @@ or nil to disable expiry."
              ((s-contains-p "E: The master key" status)
               (progn
                 (password-cache-remove entity)
-                (error "Incorrect password for %s" entity)))
-             (t (error "Something went wrong in keepass: %s" status))))
+                (user-error "Incorrect password for %s" entity)))
+             (t (user-error "Something went wrong in keepass: %s" status))))
           ((= 0 (length result)) nil)
           ((and (= max 1) (> (length result) max))
            (let* ((completions (--map (cons

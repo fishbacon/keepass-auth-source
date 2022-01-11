@@ -46,6 +46,11 @@ or nil to disable expiry."
           (const :tag "30 Minutes" 1800)
           (integer :tag "Seconds")))
 
+(defcustom keepass-auth-match-title t
+  "If `title' argument passed to `auth-source-search' should be used in selecting an entry.
+Entries matching `title' will be selected if one and only one entry matches on `url'.
+If no entries match but multiple are found the user is prompted to select the auth.")
+
 (defun keepass-auth-source--parse-auth (auth-string port)
   (save-match-data
     (with-temp-buffer
@@ -70,7 +75,7 @@ or nil to disable expiry."
     `(,auths ,status)))
 
 (cl-defun keepass-auth-source-search (&rest spec
-                                      &key backend type host user port max
+                                      &key backend type host user port max title
                                         &allow-other-keys)
   "Find password for a request, if several passwords are available prompt user to select an entry."
   (let ((entity (slot-value backend 'source)))
@@ -104,7 +109,10 @@ or nil to disable expiry."
              (output (shell-command-to-string keepass-command))
              (result (keepass-auth-source--parse output port))
              (status (-last-item result))
-             (result (-first-item result)))
+             (result (-first-item result))
+             (result-for-title (when keepass-auth-match-title
+                                 (--filter (s-contains-p title (plist-get it :title) t) result)))
+             (result (if (= 1 (length result-for-title)) result-for-title result)))
         (cond
           ((s-prefix-p "E:" status)
            (cond

@@ -110,7 +110,7 @@ If no entries match but multiple are found the user is prompted to select the au
              (result (keepass-auth-source--parse output port))
              (status (-last-item result))
              (result (-first-item result))
-             (result-for-title (when keepass-auth-match-title
+             (result-for-title (when (and keepass-auth-match-title (not (s-blank-p title)))
                                  (--filter (s-contains-p title (plist-get it :title) t) result)))
              (result (if (= 1 (length result-for-title)) result-for-title result)))
         (cond

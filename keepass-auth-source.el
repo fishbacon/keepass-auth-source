@@ -114,6 +114,10 @@ If no entries match but multiple are found the user is prompted to select the au
                                  (--filter (s-contains-p title (plist-get it :title) t) result)))
              (result (if (= 1 (length result-for-title)) result-for-title result)))
         (cond
+          ((s-prefix-p "Unhandled Exception:" status)
+           (progn
+             (password-cache-remove entity)
+             (user-error "An exception was throw\n %s" status)))
           ((s-prefix-p "E:" status)
            (cond
              ((s-contains-p "E: The master key" status)

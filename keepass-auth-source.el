@@ -108,35 +108,40 @@ If no entries match but multiple are found the user is prompted to select the au
              (keepass-command (s-format keepass-command-base 'aget keepass-command-fields))
              (output (shell-command-to-string keepass-command))
              (result (keepass-auth-source--parse output port))
-             (status (-last-item result))
-             (result (-first-item result))
+             (status (car (last result)))
+             (result (car (first result)))
              (result-for-title (when (and keepass-auth-match-title (not (s-blank-p title)))
                                  (--filter (s-contains-p title (plist-get it :title) t) result)))
              (result (if (= 1 (length result-for-title)) result-for-title result)))
-        (cond
-          ((s-prefix-p "Unhandled Exception:" status)
-           (progn
-             (password-cache-remove entity)
-             (user-error "An exception was throw\n %s" status)))
-          ((s-prefix-p "E:" status)
-           (cond
-             ((s-contains-p "E: The master key" status)
-              (progn
-                (password-cache-remove entity)
-                (user-error "Incorrect password for %s" entity)))
-             (t (user-error "Something went wrong in keepass: %s" status))))
-          ((= 0 (length result)) nil)
-          ((and (= max 1) (> (length result) max))
-           (let* ((completions (--map (cons
-                                       (format "%s (%s)" (plist-get it :user) (plist-get it :title))
-                                       it)
-                                      result)))
-             (list (cdr (assoc-string
-                         (completing-read "Multiple passwords in keepass db pick one: "
-                                          completions
-                                          nil t)
-                         completions)))))
-          (t (-take max result)))))))
+        (with-temp-buffer
+          (insert status)
+          (goto-char 0)
+          (cond
+            ((search-forward-regexp "^Unhandled Exception:" nil t)
+             (progn
+               (password-cache-remove entity)
+               (user-error
+                "An exception was thrown by KeePass.exe (your KPScript is likely out of date)\n %s"
+                status)))
+            ((search-forward-regexp "^E:" nil t)
+             (cond
+               ((search-forward-regexp "The master key is invalid" nil t)
+                (progn
+                  (password-cache-remove entity)
+                  (user-error "Incorrect password for %s" entity)))
+               (t (user-error "Something went wrong in keepass: %s" status))))
+            ((= 0 (length result)) nil)
+            ((and (= max 1) (> (length result) max))
+             (let* ((completions (--map (cons
+                                         (format "%s (%s)" (plist-get it :user) (plist-get it :title))
+                                         it)
+                                        result)))
+               (list (cdr (assoc-string
+                           (completing-read "Multiple passwords in keepass db pick one: "
+                                            completions
+                                            nil t)
+                           completions)))))
+            (t (-take max result))))))))
 
 (defun keepass-auth-source-backend-parser (entry)
   "Provides keepass backend for files with the .kdbx extension."

@@ -26,3 +26,14 @@
    The auth-source will ask for password for the kdbx file when trying to use it as an auth source.
 
    KeePass database passwords are set to expire after two hours, this can be customized by setting =keepass-auth-source-cache-expiry= to any other value. It can also be customized via =m-x= =customize-variable=.
+
+** Asynchronous Operation
+   By default, keepass-auth-source uses synchronous calls to KPScript which may block Emacs during database access. For better responsiveness, especially with slow network connections or large databases, you can enable asynchronous operation:
+
+   #+BEGIN_SRC elisp
+     (setq keepass-auth-source-async t)
+   #+END_SRC
+
+   When enabled, KPScript is invoked using =make-process= instead of synchronous =call-process=. This allows Emacs to remain responsive while KeePass database queries are processed in the background.
+
+   *Note:* Asynchronous mode may not be compatible with all auth-source consumers that expect immediate results. Use with caution and test thoroughly with your specific configuration.

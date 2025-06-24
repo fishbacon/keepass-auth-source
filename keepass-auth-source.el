@@ -86,7 +86,7 @@ If no entries match but multiple are found the user is prompted to select the au
                     (url-generic-parse-url (concat "//" host))))
              (host (or (url-host url) ""))
              (max (or max 1))
-             (path-name (or (url-filename url) ""))
+             (path (or (car (url-path-and-query url)) ""))
              (password-prompt (format "Keepass password (%s): " entity))
              (password (let ((password-cache-expiry keepass-auth-source-cache-expiry)
                              (password
@@ -97,13 +97,13 @@ If no entries match but multiple are found the user is prompted to select the au
                          password))
              (keepass-command-base (s-join " "
                                            '("kpscript -C:ListEntries"
-                                             "${db}"
-                                             "-ref-Username:${user}"
-                                             "-ref-URL://${url}//"
-                                             "-pw:${password}")))
+                                             "\"${db}\""
+                                             "-ref-Username:\"${user}\""
+                                             "-ref-URL:\"//${url}//\""
+                                             "-pw:\"${password}\"")))
              (keepass-command-fields `((db . ,(expand-file-name entity))
                                        (user . ,(or user ""))
-                                       (url . ,(concat host path-name))
+                                       (url . ,(concat host path))
                                        (password . ,password)))
              (keepass-command (s-format keepass-command-base 'aget keepass-command-fields))
              (output (shell-command-to-string keepass-command))
